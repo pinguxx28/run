@@ -22,15 +22,21 @@ func doesPathExist(path string) bool {
 	return !errors.Is(err, fs.ErrNotExist)
 }
 
-func getLineContaining(path string, text string) string {
+func getCommand(path string, text string) (command string) {
 	file, err := os.Open(path)
 	checkErr(err, "cannot open file")
 
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
-		if strings.Contains(scanner.Text(), text) {
-			return scanner.Text()
+		firstSpace := strings.Index(scanner.Text(), " ")
+		if firstSpace == -1 {
+			log.Fatalln("line doesn't contain any spaces\n")
+		}
+
+		dir := scanner.Text()[:firstSpace]
+		if dir == text {
+			command = scanner.Text()[firstSpace+1:]
 		}
 	}
 
@@ -40,7 +46,7 @@ func getLineContaining(path string, text string) string {
 	err = file.Close()
 	checkErr(err, "cannot close file")
 
-	return ""
+	return 
 }
 
 func setRunDirAndFile() (string, string) {

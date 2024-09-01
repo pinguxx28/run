@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"fmt"
-	"log"
 	"os/exec"
 	"strings"
 )
@@ -12,30 +11,17 @@ func run(file string) {
 	dir, err := os.Getwd()
 	checkErr(err, "cannot get working directory")
 
-	line := getLineContaining(file, dir)
-	if line == "" {
-		log.Fatalln("This directory doesn't have a command set")
-	}
+	originalCommand := getCommand(file, dir)
+	commands := strings.Split(originalCommand, "&&")
 
-	index := strings.Index(line, " ")
-	if index == -1 {
-		log.Fatalf("Line is weird: [%v]\n", line)
-	}
+	for _, command := range commands {
+		trimmedCommand := strings.TrimSpace(command)
+		commandArgs := strings.Fields(trimmedCommand)
 
-	command := line[index+1:]
-	commandArgs := strings.Fields(command)
-	
-	var e *exec.ExitError
-	output, e := exec.Command(commandArgs[0], commandArgs[1:]...).Output()
-	checkErr(e, e.Stderr)
-	/*
-	cmd := exec.Command("sleep", "-u")
-	err := cmd.Run()
-	var exerr *exec.ExitError
-	if errors.As(err, &exerr) {
-		fmt.Printf("the command exited unsuccessfully: %d\n", exerr.ExitCode())
+		output, err := exec.Command(commandArgs[0], commandArgs[1:]...).Output()
+		checkErr(err, "cannot exec command")
+
+		fmt.Printf("+ %v\n", trimmedCommand)
+		fmt.Print(string(output))
 	}
-	*/
-	fmt.Printf("+ %v\n", command)
-	fmt.Print(string(output))
 }
